@@ -11,7 +11,7 @@
     "core-js": "^3.6.4",
     "luxon": "^1.24.1",
     "vue": "^2.6.11",
-    "vue-datetime": "^1.0.0-beta.13",
+    "vue-flatpickr-component": "^8.1.5",
     "vue-infinite-loading": "^2.4.5",
     "weekstart": "^1.0.1"
   },
