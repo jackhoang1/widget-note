@@ -139,11 +139,20 @@
           </div>
           <div class="d-flex justify-content-between align-items-center">
             <p class="mb-0">Thời gian nhắc</p>
-            <Flatpickr
+            <!-- <Flatpickr
               id="modal__content--flatpickr"
               class="my-2"
               @schedule_time="getScheduleTime"
               :choose_time_schedule="choose_time_schedule"
+            />-->
+            <input
+              class="form-control"
+              type="datetime-local"
+              id="meeting-time"
+              name="meeting-time"
+              :min="timeMin()"
+              v-model="time_input"
+              style="width:67%;font-size:11px;"
             />
           </div>
           <div class="modal__content--btn">
@@ -158,29 +167,29 @@
 
 <script>
 import fetch from "@/services/resful.js";
-import Flatpickr from "@/components/Flatpickr";
+// import Flatpickr from "@/components/Flatpickr";
 
 const APISCHEDULE = "https://api.xbusiness.vn/v1/bot/note_schedule";
-// const API = "https://chatbox-app.botbanhang.vn/v1/app/note";
-const API = "https://app.devchatbox.tk/v1/app/note";
-// const APIBase = "https://chatbox-app.botbanhang.vn";
-const APIBase = "https://app.devchatbox.tk";
+const API = "https://chatbox-app.botbanhang.vn/v1/app/note";   //product
+// const API = "https://app.devchatbox.tk/v1/app/note";
+const APIBase = "https://chatbox-app.botbanhang.vn";    //product
+// const APIBase = "https://app.devchatbox.tk";
 let url_string = location.href;
 let url = new URL(url_string);
 let access_token = url.searchParams.get("access_token");
 
 export default {
-  components: {
-    Flatpickr,
-  },
+  // components: {
+  //   Flatpickr,
+  // },
   data() {
     return {
       is_oauth: false,
       show_form_oauth: false,
       access_token: access_token,
-      // secret_key: "c098f51f09af4fe78283ce83d50cd1ca", //product
+      secret_key: "c098f51f09af4fe78283ce83d50cd1ca", //product
       // secret_key: "bb1fa0ddc02d4d6cbaa30502c6ffb02f",
-      secret_key: "e0f12428dfd6427790e10584eb5eeeff",
+      // secret_key: "e0f12428dfd6427790e10584eb5eeeff",
       content: "",
       allNote: [],
       payload: "",
@@ -202,6 +211,12 @@ export default {
       page: 1,
       list: [],
       infiniteId: +new Date(),
+
+      time_min: new Date(),
+      time_now: "",
+      time_input:this.timeMin(),
+      time_choose: "",
+      test: "",
     };
   },
   mounted() {
@@ -234,6 +249,25 @@ export default {
   },
 
   methods: {
+    convertTimeStamp() {
+      if (!this.time_input) return;
+      this.schedule_time = new Date(this.time_input).getTime();
+      console.log(" this.schedule_time", this.schedule_time);
+    },
+    timeMin() {
+      let time = new Date(
+        new Date().getTime() + 7 * 60 * 60 * 1000
+      ).toISOString();
+      return time.substring(0, time.length - 8);
+    },
+    convertISOString() {
+      if (!this.schedule_time) return;
+      console.log("1111111111111", this.schedule_time);
+      let time = new Date(this.schedule_time).toISOString();
+      console.log("2222222222222222", time);
+      let time_iso = time.substring(0, time.length - 8);
+      this.time_input = time_iso;
+    },
     getScheduleTime(time) {
       this.schedule_time = time;
       console.log("schedule_time", this.schedule_time);
@@ -241,6 +275,7 @@ export default {
     clearScheduleTime() {
       this.schedule_time = "";
       this.choose_time_schedule = "";
+      this.time_input = "";
       console.log("huyyyyyyyyyyyyyyyyyy", this.schedule_time);
     },
     checkScheduleTime(time) {
@@ -385,13 +420,16 @@ export default {
     },
     handleChooseTime(time) {
       if (time == "1h") {
-        this.schedule_time = new Date().getTime() + 1 * 60 * 60 * 1000;
+        this.schedule_time =
+          new Date().getTime() + 1 * 60 * 60 * 1000 + 7 * 60 * 60 * 1000;
       }
       if (time == "3h") {
-        this.schedule_time = new Date().getTime() + 3 * 60 * 60 * 1000;
+        this.schedule_time =
+          new Date().getTime() + 3 * 60 * 60 * 1000 + 7 * 60 * 60 * 1000;
       }
       if (time == "6h") {
-        this.schedule_time = new Date().getTime() + 6 * 60 * 60 * 1000;
+        this.schedule_time =
+          new Date().getTime() + 6 * 60 * 60 * 1000 + 7 * 60 * 60 * 1000;
       }
       if (time == "tomorrow") {
         let tomorrow = new Date();
@@ -400,11 +438,13 @@ export default {
         let tomorrow_month = tomorrow.getMonth() + 1;
         let tomorrow_year = tomorrow.getFullYear();
         let tomorrow_create_time = `${tomorrow_year}-${tomorrow_month}-${tomorrow_date} 9:0`;
-        this.schedule_time = new Date(tomorrow_create_time).getTime();
+        this.schedule_time =
+          new Date(tomorrow_create_time).getTime() + 7 * 60 * 60 * 1000;
       }
-      this.is_choose__time = time;
-      this.choose_time_schedule = new Date(this.schedule_time).toUTCString();
-      console.log("aaaaaaaaaaaaaaaa", this.choose_time_schedule);
+      this.convertISOString();
+      // this.is_choose__time = time;
+      // this.choose_time_schedule = new Date(this.schedule_time).toUTCString();
+      // console.log("aaaaaaaaaaaaaaaa", this.choose_time_schedule);
     },
     handleShowModal() {
       this.show_modal = true;
@@ -423,7 +463,7 @@ export default {
       if (minutes.toString().length == 1) {
         minutes = "0" + minutes.toString();
       }
-      return `${hours}:${minutes} - ${date}/${month}/${year}`;
+      return `${hours}:${minutes} - ${date}/${month+1}/${year}`;
     },
     handleTime(time) {
       let t = new Date(time);
@@ -537,6 +577,12 @@ export default {
       } catch (e) {
         console.log(e);
       }
+    },
+  },
+  watch: {
+    time_input: function () {
+      console.log("watch run");
+      this.convertTimeStamp();
     },
   },
 };
@@ -729,6 +775,7 @@ hr {
         // margin: 0 3px 0 3px;
         // padding: 0 2px 0 2px;
         width: 58px;
+        height: 25px;
         font-size: 0.75rem;
         border: none;
         display: flex;
