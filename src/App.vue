@@ -44,8 +44,8 @@
                   </div>
                   <div></div>
                   <div class="d-flex">
-                    <p class="time m-0 text-primary">{{handleTime(item.updatedAt)}}</p>
-
+                    <p class="time m-0 text-primary">{{handleTime(item.createdAt)}}</p>
+                    <!-- icon edit && delete  -->
                     <i
                       class="icon-edit fas fa-pencil-alt pl-2"
                       @click="item.edit=true"
@@ -60,15 +60,17 @@
                     ></i>
                   </div>
                 </div>
+                <!-- content note -->
                 <div
-                  class="item-note"
-                  :class="{'item-note-schedule':checkScheduleTime(item.schedule) }"
+                  class="note__content"
+                  :class="{'note__content--schedule':checkScheduleTime(item.schedule) }"
                 >{{item.content}}</div>
               </div>
+              <!-- input edit note -->
               <div v-else>
                 <div class="text-right px-3" style="cursor: pointer" @click="item.edit=false">Cancel</div>
                 <div
-                  id="input-edit"
+                  id="note__input--edit"
                   contenteditable="plaintext-only"
                   @keyup.13="checkKeyCodeUpdate($event,item._id)"
                   data-text="Sửa nội dung, Ấn Enter để lưu, Shift+Enter để xuống dòng ..."
@@ -82,7 +84,7 @@
             <div slot="no-more">No more Note</div>
           </infinite-loading>
         </div>
-
+        <!-- input create note && icon schedule -->
         <hr />
         <div class="mb-1 d-flex justify-content-center align-items-center">
           <div
@@ -92,23 +94,18 @@
             data-text="Nhập nội dung, Ấn Enter để lưu ..."
           ></div>
           <div class="px-2" title="Đặt Nhắc Hẹn" @click="handleShowModal">
-            <img class="icon-schedule" src="../public/img/icons/schedule.png" alt />
+            <img class="note__icon--schedule" src="../public/img/icons/schedule.png" alt />
           </div>
-          <i
-            class="icon-sent fas fa-paper-plane text-primary"
-            @click="checkKeyCodeCreate"
-            title="Lưu Ghi Chú"
-          ></i>
         </div>
       </div>
     </div>
-    <!-- modal -->
+    <!-- modal schedule-->
     <div class="modal__note" v-if="show_modal">
       <div class="modal__content">
         <div>
           <p class="font-weight-bold">Nhắc hẹn</p>
           <div
-            id="input-schedule"
+            id="content__schedule--input"
             contenteditable="plaintext-only"
             data-text="Nhập nội dung nhắc hẹn"
           ></div>
@@ -139,20 +136,12 @@
           </div>
           <div class="d-flex justify-content-between align-items-center">
             <p class="mb-0">Thời gian nhắc</p>
-            <!-- <Flatpickr
-              id="modal__content--flatpickr"
-              class="my-2"
-              @schedule_time="getScheduleTime"
-              :choose_time_schedule="choose_time_schedule"
-            />-->
             <input
-              class="form-control"
+              class="content__schedule--input-time form-control"
               type="datetime-local"
-              id="meeting-time"
               name="meeting-time"
-              :min="timeMin()"
+              :min="time_now"
               v-model="time_input"
-              style="width:67%;font-size:11px;"
             />
           </div>
           <div class="modal__content--btn">
@@ -170,10 +159,10 @@ import fetch from "@/services/resful.js";
 // import Flatpickr from "@/components/Flatpickr";
 
 const APISCHEDULE = "https://api.xbusiness.vn/v1/bot/note_schedule";
-const API = "https://chatbox-app.botbanhang.vn/v1/app/note";   //product
-// const API = "https://app.devchatbox.tk/v1/app/note";
-const APIBase = "https://chatbox-app.botbanhang.vn";    //product
-// const APIBase = "https://app.devchatbox.tk";
+// const API = "https://chatbox-app.botbanhang.vn/v1/app/note"; //product
+const API = "https://app.devchatbox.tk/v1/app/note"; //dev
+// const APIBase = "https://chatbox-app.botbanhang.vn"; //product
+const APIBase = "https://app.devchatbox.tk"; //dev
 let url_string = location.href;
 let url = new URL(url_string);
 let access_token = url.searchParams.get("access_token");
@@ -187,9 +176,9 @@ export default {
       is_oauth: false,
       show_form_oauth: false,
       access_token: access_token,
-      secret_key: "c098f51f09af4fe78283ce83d50cd1ca", //product
+      // secret_key: "c098f51f09af4fe78283ce83d50cd1ca", //product
       // secret_key: "bb1fa0ddc02d4d6cbaa30502c6ffb02f",
-      // secret_key: "e0f12428dfd6427790e10584eb5eeeff",
+      secret_key: "e0f12428dfd6427790e10584eb5eeeff", //dev
       content: "",
       allNote: [],
       payload: "",
@@ -212,41 +201,17 @@ export default {
       list: [],
       infiniteId: +new Date(),
 
-      time_min: new Date(),
       time_now: "",
-      time_input:this.timeMin(),
+      time_input: "",
       time_choose: "",
       test: "",
     };
   },
   mounted() {
+    this.partnerAuth();
     this.infiniteHandler();
   },
-  async created() {
-    try {
-      let body = {
-        access_token: this.access_token,
-        secret_key: this.secret_key,
-      };
-      let get_customer_info = await fetch.post(
-        `${APIBase}/v1/service/partner-authenticate`,
-        body
-      );
-      if (get_customer_info.data.succes && get_customer_info.data.code == 200) {
-        this.is_oauth = true;
-      }
-      this.fb_page_id = get_customer_info.data.data.public_profile.fb_page_id;
-      this.fb_client_id =
-        get_customer_info.data.data.public_profile.fb_client_id;
-      this.current_staff_id =
-        get_customer_info.data.data.public_profile.current_staff_id;
-      this.current_staff_name =
-        get_customer_info.data.data.public_profile.current_staff_name;
-    } catch (e) {
-      this.show_form_oauth = true;
-      console.log(e);
-    }
-  },
+  created() {},
 
   methods: {
     convertTimeStamp() {
@@ -254,11 +219,17 @@ export default {
       this.schedule_time = new Date(this.time_input).getTime();
       console.log(" this.schedule_time", this.schedule_time);
     },
-    timeMin() {
+    timeMinSchedule() {
       let time = new Date(
         new Date().getTime() + 7 * 60 * 60 * 1000
       ).toISOString();
-      return time.substring(0, time.length - 8);
+      this.time_now = time.substring(0, time.length - 8);
+      this.time_input = this.time_now;
+      console.log("time_now", this.time_now);
+      console.log("time_input", this.time_input);
+    },
+    getTimeISONow() {
+      return new Date().toISOString();
     },
     convertISOString() {
       if (!this.schedule_time) return;
@@ -314,34 +285,32 @@ export default {
         this.handleAPI = true;
       }
     },
-    async createNote() {
-      ///create new note
-      try {
-        if (!this.is_create_schedule) {
-          this.content = document.getElementById("input").innerHTML.trim();
-        }
-        if (!this.content) return;
-
-        let body = {
-          content: this.content,
-          fb_page_id: this.fb_page_id,
-          fb_client_id: this.fb_client_id,
-          fb_staff_id: this.current_staff_id,
-          staff_name: this.current_staff_name,
-          schedule: this.schedule_time,
-        };
-        if (!this.schedule_time) delete body.schedule;
-        // console.log("createNote body", body);
-        let create_note = await fetch.post(API + "/create", body);
-        //  console.log("createNote body", create_note);
-        this.resetInfinite();
-        this.swalToast("Đã thêm", "success");
-        this.content = "";
-        this.clearScheduleTime();
-        document.getElementById("input").innerHTML = "";
-      } catch (e) {
-        console.log(e);
-        this.swalToast("Thêm thất bại", "warning");
+    addItemListNote(note) {
+      //handle add note in local
+      if (note) {
+        note.edit = false;
+        this.list.unshift(note);
+        console.log("this.list", this.list);
+      }
+    },
+    editItemListNote(_id, content) {
+      //handle edit note in local
+      if (_id && content) {
+        this.list.map((note) => {
+          console.log("test map");
+          if (note._id == _id) {
+            note.content = content;
+            note.edit = false;
+          }
+        });
+      }
+    },
+    deleteItemListNote(_id) {
+      //handle delete note in local
+      if (_id) {
+        this.list = this.list.filter((note) => {
+          return note._id != _id;
+        });
       }
     },
     async createSchedule() {
@@ -351,7 +320,7 @@ export default {
         }
         this.is_create_schedule = true;
         let content_schedule = document
-          .getElementById("input-schedule")
+          .getElementById("content__schedule--input")
           .innerHTML.trim();
         if (!content_schedule) {
           return this.swalToast("Chưa nhập nội dung cuộc hẹn", "warning");
@@ -371,14 +340,13 @@ export default {
           telegram_id: "",
         };
         let create_schedule = await fetch.post(APISCHEDULE, body);
-        this.createNote();
-        this.resetInfinite();
+        let create_note = await this.createNote();
         this.swalToast("Đặt nhắc hẹn thành công", "success");
         this.is_create_schedule = false;
         this.clearScheduleTime();
         this.content_schedule = "";
         this.content = "";
-        document.getElementById("input-schedule").innerHTML = "";
+        document.getElementById("content__schedule--input").innerHTML = "";
         this.handleHideModal();
       } catch (e) {
         console.log(e);
@@ -389,11 +357,43 @@ export default {
         );
       }
     },
+    async createNote() {
+      ///create new note
+      try {
+        if (!this.is_create_schedule) {
+          this.content = document.getElementById("input").innerHTML.trim();
+        }
+        if (!this.content) return;
+
+        let body = {
+          content: this.content,
+          fb_page_id: this.fb_page_id,
+          fb_client_id: this.fb_client_id,
+          fb_staff_id: this.current_staff_id,
+          staff_name: this.current_staff_name,
+          schedule: this.schedule_time,
+        };
+        if (!this.schedule_time) delete body.schedule;
+        let create_note = await fetch.post(API + "/create", body);
+        if (create_note.data.code == 200) {
+          let note = create_note.data.data.note;
+          this.addItemListNote(note);
+          this.swalToast("Đã thêm", "success");
+          this.content = "";
+          this.clearScheduleTime();
+          document.getElementById("input").innerHTML = "";
+        }
+      } catch (e) {
+        console.log(e);
+        this.swalToast("Thêm thất bại", "warning");
+      }
+    },
+
     async deleteNote(_id) {
       ////delete note
       try {
         let delete_note = await fetch.post(API + "/delete", { _id: _id });
-        this.resetInfinite();
+        this.deleteItemListNote(_id);
         this.swalToast("Đã xoá", "success");
       } catch (e) {
         console.log(e);
@@ -411,7 +411,7 @@ export default {
           // schedule: this.schedule_time,
         };
         let update_note = await fetch.post(API + "/update", body);
-        this.resetInfinite();
+        this.editItemListNote(_id, content);
         this.swalToast("Đã sửa", "success");
       } catch (e) {
         console.log(e);
@@ -442,12 +442,13 @@ export default {
           new Date(tomorrow_create_time).getTime() + 7 * 60 * 60 * 1000;
       }
       this.convertISOString();
-      // this.is_choose__time = time;
+      this.is_choose__time = time;
       // this.choose_time_schedule = new Date(this.schedule_time).toUTCString();
       // console.log("aaaaaaaaaaaaaaaa", this.choose_time_schedule);
     },
     handleShowModal() {
       this.show_modal = true;
+      this.timeMinSchedule();
     },
     handleHideModal() {
       this.show_modal = false;
@@ -463,7 +464,7 @@ export default {
       if (minutes.toString().length == 1) {
         minutes = "0" + minutes.toString();
       }
-      return `${hours}:${minutes} - ${date}/${month+1}/${year}`;
+      return `${hours}:${minutes} - ${date}/${month + 1}/${year}`;
     },
     handleTime(time) {
       let t = new Date(time);
@@ -520,17 +521,19 @@ export default {
             limit: 5,
           };
           let read_note = await fetch.post(API + "/read", body);
-          console.log("data note", read_note.data);
-          let data = read_note.data.data.note;
-          for (let item of data) {
-            item.edit = false;
-          }
-          if (data.length) {
-            this.page += 1;
-            this.list.push(...data);
-            $state.loaded();
-          } else {
-            $state.complete();
+          if (read_note && read_note.data.data.note) {
+            let data = read_note.data.data.note;
+            for (let item of data) {
+              item.edit = false;
+            }
+            if (data.length) {
+              this.page += 1;
+              this.list.push(...data);
+              console.log("1111111111111", this.list);
+              $state.loaded();
+            } else {
+              $state.complete();
+            }
           }
         } catch (e) {
           console.log(e);
@@ -547,7 +550,7 @@ export default {
         toast: true,
         position: "top-end",
         showConfirmButton: false,
-        timer: 1000,
+        timer: 800,
         timerProgressBar: false,
         onOpen: (toast) => {
           toast.addEventListener("mouseenter", Swal.stopTimer);
@@ -567,6 +570,7 @@ export default {
           access_token: this.access_token,
           token_partner: "active",
         };
+
         let oauth = await fetch.post(
           `${APIBase}/v1/app/app-installed/update`,
           body
@@ -575,6 +579,35 @@ export default {
         this.show_form_oauth = false;
         window.close();
       } catch (e) {
+        console.log(e);
+      }
+    },
+    async partnerAuth() {
+      try {
+        let body = {
+          access_token: this.access_token,
+          secret_key: this.secret_key,
+        };
+        let get_customer_info = await fetch.post(
+          `${APIBase}/v1/service/partner-authenticate`,
+          body
+        );
+        if (
+          get_customer_info.data.succes &&
+          get_customer_info.data.code == 200
+        ) {
+          this.is_oauth = true;
+          this.fb_page_id =
+            get_customer_info.data.data.public_profile.fb_page_id;
+          this.fb_client_id =
+            get_customer_info.data.data.public_profile.fb_client_id;
+          this.current_staff_id =
+            get_customer_info.data.data.public_profile.current_staff_id;
+          this.current_staff_name =
+            get_customer_info.data.data.public_profile.current_staff_name;
+        }
+      } catch (e) {
+        this.show_form_oauth = true;
         console.log(e);
       }
     },
@@ -590,6 +623,7 @@ export default {
 
 <style lang="scss" scoped>
 $colorBgNote: rgb(225, 225, 225);
+$boxShadowInput: 0.5px 1px 4px 0 rgba(0, 0, 0, 0.2);
 @mixin divNote {
   -moz-appearance: textfield;
   -webkit-appearance: textfield;
@@ -638,7 +672,6 @@ body {
         width: 100%;
         height: auto;
       }
-
       .all-note {
         margin-top: 5px;
         height: auto;
@@ -655,18 +688,19 @@ body {
         &:hover .icon .time {
           display: none;
         }
-        .item-note-schedule {
+        .note__content--schedule {
           background-color: #ffdac4 !important;
           &:hover {
             background-color: #ffe6d7 !important;
           }
         }
-        .item-note {
+        .note__content {
           @include divNote;
           white-space: pre-line;
           background-color: $colorBgNote;
           border-radius: 6px;
           padding: 5px;
+          box-shadow: $boxShadowInput;
           &:hover {
             background-color: rgb(245, 245, 245);
           }
@@ -705,17 +739,12 @@ textarea::-webkit-scrollbar {
   width: 1px;
   background-color: #f5f5f5;
 }
-.icon-sent {
-  font-size: 1.2rem;
+.note__icon--schedule {
+  height: 25px;
+  width: 25px;
   &:hover {
     cursor: pointer;
-  }
-}
-.icon-schedule {
-  height: 26px;
-  width: 26px;
-  &:hover {
-    cursor: pointer;
+    transform: scale(1.2);
   }
 }
 hr {
@@ -726,14 +755,16 @@ hr {
   max-height: 60px;
   border-color: $colorBgNote;
   background-color: $colorBgNote;
+  box-shadow: $boxShadowInput;
   @include divEditTable;
 }
-#input-edit {
+#note__input--edit {
   @include divEditTable;
   max-height: 120px;
   border-color: $colorBgNote;
   background-color: rgb(100, 100, 100);
   color: #fff;
+  box-shadow: $boxShadowInput;
 }
 [contentEditable="plaintext-only"]:empty:not(:focus):before {
   content: attr(data-text);
@@ -761,12 +792,13 @@ hr {
     width: 100%;
     margin: 0 5px 0 5px;
     border-radius: 10px;
-    #input-schedule {
+    #content__schedule--input {
       min-height: 40px;
       max-height: 60px;
       margin: 10px 0 10px 0;
       border-color: $colorBgNote;
       background-color: $colorBgNote;
+      box-shadow: $boxShadowInput;
       @include divEditTable;
     }
     .modal__content--btn-time {
@@ -785,7 +817,7 @@ hr {
         border-radius: 4px;
         padding: 6px 7px 7px 7px;
         text-align: center;
-        box-shadow: 0.5px 1px 4px 0 rgba(0, 0, 0, 0.2);
+        box-shadow: $boxShadowInput;
         &:hover {
           color: #6c757d;
           background: #ffe6d7;
@@ -795,6 +827,11 @@ hr {
         background: #ffdac4 !important;
         // color: #ffffff;
       }
+    }
+    .content__schedule--input-time {
+      width: 67%;
+      font-size: 11px;
+      box-shadow: $boxShadowInput;
     }
     .modal__content--btn {
       text-align: right;
