@@ -159,10 +159,10 @@ import fetch from "@/services/resful.js";
 // import Flatpickr from "@/components/Flatpickr";
 
 const APISCHEDULE = "https://api.xbusiness.vn/v1/bot/note_schedule";
-// const API = "https://chatbox-app.botbanhang.vn/v1/app/note"; //product
-const API = "https://app.devchatbox.tk/v1/app/note"; //dev
-// const APIBase = "https://chatbox-app.botbanhang.vn"; //product
-const APIBase = "https://app.devchatbox.tk"; //dev
+const API = "https://chatbox-app.botbanhang.vn/v1/app/note"; //product
+// const API = "https://app.devchatbox.tk/v1/app/note"; //dev
+const APIBase = "https://chatbox-app.botbanhang.vn"; //product
+// const APIBase = "https://app.devchatbox.tk"; //dev
 let url_string = location.href;
 let url = new URL(url_string);
 let access_token = url.searchParams.get("access_token");
@@ -176,9 +176,9 @@ export default {
       is_oauth: false,
       show_form_oauth: false,
       access_token: access_token,
-      // secret_key: "c098f51f09af4fe78283ce83d50cd1ca", //product
+      secret_key: "c098f51f09af4fe78283ce83d50cd1ca", //product
       // secret_key: "bb1fa0ddc02d4d6cbaa30502c6ffb02f",
-      secret_key: "e0f12428dfd6427790e10584eb5eeeff", //dev
+    //   secret_key: "e0f12428dfd6427790e10584eb5eeeff", //dev
       content: "",
       allNote: [],
       payload: "",
@@ -242,7 +242,7 @@ export default {
       this.choose_time_schedule = "";
       this.time_input = "";
       this.is_choose_time = "";
-      console.log("huyyyyyyyyyyyyyyyyyy", this.schedule_time);
+    //   console.log("huyyyyyyyyyyyyyyyyyy", this.schedule_time);
     },
     checkScheduleTime(time) {
       if (!time) return false;
@@ -535,7 +535,7 @@ export default {
             if (data.length) {
               this.page += 1;
               this.list.push(...data);
-              console.log("1111111111111", this.list);
+            //   console.log("1111111111111", this.list);
               $state.loaded();
             } else {
               $state.complete();
