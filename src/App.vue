@@ -22,7 +22,7 @@
             </header>
 
             <div class v-for="(item, $index) in list" :key="$index">
-              <div class="all-note" v-if="item.edit==false">
+              <div class="note__body" v-if="item.edit==false">
                 <div class="icon d-flex justify-content-between align-items-center">
                   <div class="d-flex align-items-center py-1">
                     <img
@@ -62,7 +62,7 @@
                 </div>
                 <!-- content note -->
                 <div
-                  class="note__content"
+                  class="note__content--text"
                   :class="{'note__content--schedule':checkScheduleTime(item.schedule) }"
                 >{{item.content}}</div>
               </div>
@@ -70,7 +70,7 @@
               <div v-else>
                 <div class="text-right px-3" style="cursor: pointer" @click="item.edit=false">Cancel</div>
                 <div
-                  id="note__input--edit"
+                  id="note__content--input-edit"
                   contenteditable="plaintext-only"
                   @keyup.13="checkKeyCodeUpdate($event,item._id)"
                   data-text="Sửa nội dung, Ấn Enter để lưu, Shift+Enter để xuống dòng ..."
@@ -88,7 +88,7 @@
         <hr />
         <div class="mb-1 d-flex justify-content-center align-items-center">
           <div
-            id="input"
+            id="note__content--input-create"
             contenteditable="plaintext-only"
             @keyup.13="checkKeyCodeCreate"
             data-text="Nhập nội dung, Ấn Enter để lưu ..."
@@ -115,22 +115,22 @@
               <button
                 class="btn btn-outline-secondary btn-sm"
                 @click="handleChooseTime('1h')"
-                :class="{choose__time:is_choose__time=='1h'}"
+                :class="{choose__time:is_choose_time=='1h'}"
               >1h nữa</button>
               <button
                 class="btn btn-outline-secondary btn-sm"
                 @click="handleChooseTime('3h')"
-                :class="{choose__time:is_choose__time=='3h'}"
+                :class="{choose__time:is_choose_time=='3h'}"
               >3h nữa</button>
               <button
                 class="btn btn-outline-secondary btn-sm"
                 @click="handleChooseTime('6h')"
-                :class="{choose__time:is_choose__time=='6h'}"
+                :class="{choose__time:is_choose_time=='6h'}"
               >6h nữa</button>
               <button
                 class="btn btn-outline-secondary btn-sm"
                 @click="handleChooseTime('tomorrow')"
-                :class="{choose__time:is_choose__time=='tomorrow'}"
+                :class="{choose__time:is_choose_time=='tomorrow'}"
               >9h mai</button>
             </div>
           </div>
@@ -186,7 +186,7 @@ export default {
       fb_client_id: "",
       current_staff_id: "",
       current_staff_name: "",
-      handleAPI: true,
+      handle_api: false,
 
       show_modal: false,
       content_schedule: "",
@@ -194,7 +194,7 @@ export default {
       is_note_schedule: false,
       is_create_schedule: false,
       choose_time_schedule: "",
-      is_choose__time: "",
+      is_choose_time: "",
 
       infinite_loading: true,
       page: 1,
@@ -217,7 +217,6 @@ export default {
     convertTimeStamp() {
       if (!this.time_input) return;
       this.schedule_time = new Date(this.time_input).getTime();
-      console.log(" this.schedule_time", this.schedule_time);
     },
     timeMinSchedule() {
       let time = new Date(
@@ -225,28 +224,24 @@ export default {
       ).toISOString();
       this.time_now = time.substring(0, time.length - 8);
       this.time_input = this.time_now;
-      console.log("time_now", this.time_now);
-      console.log("time_input", this.time_input);
     },
     getTimeISONow() {
       return new Date().toISOString();
     },
     convertISOString() {
       if (!this.schedule_time) return;
-      console.log("1111111111111", this.schedule_time);
       let time = new Date(this.schedule_time).toISOString();
-      console.log("2222222222222222", time);
       let time_iso = time.substring(0, time.length - 8);
       this.time_input = time_iso;
     },
     getScheduleTime(time) {
       this.schedule_time = time;
-      console.log("schedule_time", this.schedule_time);
     },
     clearScheduleTime() {
       this.schedule_time = "";
       this.choose_time_schedule = "";
       this.time_input = "";
+      this.is_choose_time = "";
       console.log("huyyyyyyyyyyyyyyyyyy", this.schedule_time);
     },
     checkScheduleTime(time) {
@@ -262,13 +257,13 @@ export default {
         if (e.shiftKey && e.keyCode == 13) {
           return;
         }
-        if (!this.handleAPI) return;
-        this.handleAPI = false;
+        if (this.handle_api) return;
+        this.handle_api = true;
         await this.createNote();
-        this.handleAPI = true;
+        this.handle_api = false;
       } catch (e) {
         console.log(e);
-        this.handleAPI = true;
+        this.handle_api = false;
       }
     },
     async checkKeyCodeUpdate(e, _id) {
@@ -276,13 +271,13 @@ export default {
         if (e.shiftKey && e.keyCode == 13) {
           return;
         }
-        if (!this.handleAPI) return;
-        this.handleAPI = false;
+        if (this.handle_api) return;
+        this.handle_api = true;
         await this.updateNote(_id, e.target.innerHTML);
-        this.handleAPI = true;
+        this.handle_api = false;
       } catch (e) {
         console.log(e);
-        this.handleAPI = true;
+        this.handle_api = false;
       }
     },
     addItemListNote(note) {
@@ -290,14 +285,12 @@ export default {
       if (note) {
         note.edit = false;
         this.list.unshift(note);
-        console.log("this.list", this.list);
       }
     },
     editItemListNote(_id, content) {
       //handle edit note in local
       if (_id && content) {
         this.list.map((note) => {
-          console.log("test map");
           if (note._id == _id) {
             note.content = content;
             note.edit = false;
@@ -339,8 +332,11 @@ export default {
           message_text: this.content_schedule,
           telegram_id: "",
         };
+
         let create_schedule = await fetch.post(APISCHEDULE, body);
+
         let create_note = await this.createNote();
+
         this.swalToast("Đặt nhắc hẹn thành công", "success");
         this.is_create_schedule = false;
         this.clearScheduleTime();
@@ -361,10 +357,11 @@ export default {
       ///create new note
       try {
         if (!this.is_create_schedule) {
-          this.content = document.getElementById("input").innerHTML.trim();
+          this.content = document
+            .getElementById("note__content--input-create")
+            .innerHTML.trim();
         }
         if (!this.content) return;
-
         let body = {
           content: this.content,
           fb_page_id: this.fb_page_id,
@@ -374,14 +371,21 @@ export default {
           schedule: this.schedule_time,
         };
         if (!this.schedule_time) delete body.schedule;
+
         let create_note = await fetch.post(API + "/create", body);
-        if (create_note.data.code == 200) {
+
+        if (
+          create_note &&
+          create_note.data &&
+          create_note.data.data &&
+          create_note.data.code == 200
+        ) {
           let note = create_note.data.data.note;
           this.addItemListNote(note);
           this.swalToast("Đã thêm", "success");
           this.content = "";
           this.clearScheduleTime();
-          document.getElementById("input").innerHTML = "";
+          document.getElementById("note__content--input-create").innerHTML = "";
         }
       } catch (e) {
         console.log(e);
@@ -410,7 +414,9 @@ export default {
           content: content,
           // schedule: this.schedule_time,
         };
+
         let update_note = await fetch.post(API + "/update", body);
+
         this.editItemListNote(_id, content);
         this.swalToast("Đã sửa", "success");
       } catch (e) {
@@ -442,7 +448,7 @@ export default {
           new Date(tomorrow_create_time).getTime() + 7 * 60 * 60 * 1000;
       }
       this.convertISOString();
-      this.is_choose__time = time;
+      this.is_choose_time = time;
       // this.choose_time_schedule = new Date(this.schedule_time).toUTCString();
       // console.log("aaaaaaaaaaaaaaaa", this.choose_time_schedule);
     },
@@ -575,6 +581,7 @@ export default {
           `${APIBase}/v1/app/app-installed/update`,
           body
         );
+
         this.is_oauth = true;
         this.show_form_oauth = false;
         window.close();
@@ -588,23 +595,30 @@ export default {
           access_token: this.access_token,
           secret_key: this.secret_key,
         };
+
         let get_customer_info = await fetch.post(
           `${APIBase}/v1/service/partner-authenticate`,
           body
         );
+
         if (
+          get_customer_info &&
+          get_customer_info.data &&
+          get_customer_info.data.data &&
           get_customer_info.data.succes &&
           get_customer_info.data.code == 200
         ) {
-          this.is_oauth = true;
-          this.fb_page_id =
-            get_customer_info.data.data.public_profile.fb_page_id;
-          this.fb_client_id =
-            get_customer_info.data.data.public_profile.fb_client_id;
-          this.current_staff_id =
-            get_customer_info.data.data.public_profile.current_staff_id;
-          this.current_staff_name =
-            get_customer_info.data.data.public_profile.current_staff_name;
+          if (get_customer_info.data.data.public_profile) {
+            this.is_oauth = true;
+            this.fb_page_id =
+              get_customer_info.data.data.public_profile.fb_page_id;
+            this.fb_client_id =
+              get_customer_info.data.data.public_profile.fb_client_id;
+            this.current_staff_id =
+              get_customer_info.data.data.public_profile.current_staff_id;
+            this.current_staff_name =
+              get_customer_info.data.data.public_profile.current_staff_name;
+          }
         }
       } catch (e) {
         this.show_form_oauth = true;
@@ -614,7 +628,6 @@ export default {
   },
   watch: {
     time_input: function () {
-      console.log("watch run");
       this.convertTimeStamp();
     },
   },
@@ -656,23 +669,7 @@ body {
       height: 65%;
       overflow-y: scroll;
       font-size: 12px;
-      .editNoteContent {
-        color: #fff;
-        display: inline-block;
-        resize: none;
-        border-color: $colorBgNote;
-        background-color: rgb(100, 100, 100);
-        padding: 4px 8px;
-        margin-top: 5px;
-        max-height: 120px;
-        line-height: 20px;
-        outline: none;
-        border-radius: 6px;
-        font-size: 13px;
-        width: 100%;
-        height: auto;
-      }
-      .all-note {
+      .note__body {
         margin-top: 5px;
         height: auto;
         line-height: 16px;
@@ -694,7 +691,7 @@ body {
             background-color: #ffe6d7 !important;
           }
         }
-        .note__content {
+        .note__content--text {
           @include divNote;
           white-space: pre-line;
           background-color: $colorBgNote;
@@ -735,10 +732,6 @@ body {
     }
   }
 }
-textarea::-webkit-scrollbar {
-  width: 1px;
-  background-color: #f5f5f5;
-}
 .note__icon--schedule {
   height: 25px;
   width: 25px;
@@ -747,18 +740,14 @@ textarea::-webkit-scrollbar {
     transform: scale(1.2);
   }
 }
-hr {
-  margin-top: 0.7rem;
-  margin-bottom: 0.7rem;
-}
-#input {
+#note__content--input-create {
   max-height: 60px;
   border-color: $colorBgNote;
   background-color: $colorBgNote;
   box-shadow: $boxShadowInput;
   @include divEditTable;
 }
-#note__input--edit {
+#note__content--input-edit {
   @include divEditTable;
   max-height: 120px;
   border-color: $colorBgNote;
@@ -841,5 +830,13 @@ hr {
       }
     }
   }
+}
+textarea::-webkit-scrollbar {
+  width: 1px;
+  background-color: #f5f5f5;
+}
+hr {
+  margin-top: 0.7rem;
+  margin-bottom: 0.7rem;
 }
 </style>
