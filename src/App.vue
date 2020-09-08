@@ -13,13 +13,13 @@
         >Kích hoạt</button>
       </div>
       <div v-if="is_oauth" style="height:100%">
-        <p class="text-center pt-2 m-0" style="font-size:1rem; font-weight:600">Ghi Chú</p>
+        <p class="text-center pt-2 m-0" style="font-size:1rem;font-weight:600">Ghi Chú</p>
         <div class="note">
           <div>
-            <header>
+            <!-- <header> -->
               <!-- Hacker News header -->
               <!-- <div v-model="newsType" @change="changeType"> -->
-            </header>
+            <!-- </header> -->
 
             <div class v-for="(item, $index) in list" :key="$index">
               <div class="note__body" v-if="item.edit==false">
@@ -79,8 +79,18 @@
               <!-- Hacker News item loop -->
             </div>
           </div>
-          <infinite-loading spinner="bubbles" :identifier="infiniteId" @infinite="infiniteHandler">
-            <div slot="no-results" class="py-4" style="font-size:1rem">Bạn chưa tạo Ghi Chú !</div>
+          <infinite-loading
+            ref="infiniteloading"
+            spinner="bubbles"
+            :identifier="infiniteId"
+            @infinite="infiniteHandler"
+          >
+            <div
+              slot="no-results"
+              class="py-4"
+              style="font-size:1rem"
+              v-if="list.length==0"
+            >Bạn chưa tạo ghi chú!</div>
             <div slot="no-more">No more Note</div>
           </infinite-loading>
         </div>
@@ -156,7 +166,6 @@
 
 <script>
 import fetch from "@/services/resful.js";
-// import Flatpickr from "@/components/Flatpickr";
 
 const APISCHEDULE = "https://api.xbusiness.vn/v1/bot/note_schedule";
 const API = "https://chatbox-app.botbanhang.vn/v1/app/note"; //product
@@ -168,9 +177,6 @@ let url = new URL(url_string);
 let access_token = url.searchParams.get("access_token");
 
 export default {
-  // components: {
-  //   Flatpickr,
-  // },
   data() {
     return {
       is_oauth: false,
@@ -178,7 +184,7 @@ export default {
       access_token: access_token,
       secret_key: "c098f51f09af4fe78283ce83d50cd1ca", //product
       // secret_key: "bb1fa0ddc02d4d6cbaa30502c6ffb02f",
-    //   secret_key: "e0f12428dfd6427790e10584eb5eeeff", //dev
+      // secret_key: "e0f12428dfd6427790e10584eb5eeeff", //dev
       content: "",
       allNote: [],
       payload: "",
@@ -196,7 +202,7 @@ export default {
       choose_time_schedule: "",
       is_choose_time: "",
 
-      infinite_loading: true,
+      infinite_loading_num: 0,
       page: 1,
       list: [],
       infiniteId: +new Date(),
@@ -210,6 +216,7 @@ export default {
   mounted() {
     this.partnerAuth();
     this.infiniteHandler();
+    // this.handleReloading();
   },
   created() {},
 
@@ -242,7 +249,7 @@ export default {
       this.choose_time_schedule = "";
       this.time_input = "";
       this.is_choose_time = "";
-    //   console.log("huyyyyyyyyyyyyyyyyyy", this.schedule_time);
+      //   console.log("huyyyyyyyyyyyyyyyyyy", this.schedule_time);
     },
     checkScheduleTime(time) {
       if (!time) return false;
@@ -518,8 +525,10 @@ export default {
     },
 
     infiniteHandler($state) {
-      setTimeout(async () => {
-        try {
+      try {
+        this.infinite_loading_num++;
+        console.log("this.infinite_loading_num", this.infinite_loading_num);
+        setTimeout(async () => {
           let body = {
             fb_page_id: this.fb_page_id,
             fb_client_id: this.fb_client_id,
@@ -527,7 +536,12 @@ export default {
             limit: 5,
           };
           let read_note = await fetch.post(API + "/read", body);
-          if (read_note && read_note.data.data.note) {
+          if (
+            read_note &&
+            read_note.data &&
+            read_note.data.data &&
+            read_note.data.data.note
+          ) {
             let data = read_note.data.data.note;
             for (let item of data) {
               item.edit = false;
@@ -535,17 +549,24 @@ export default {
             if (data.length) {
               this.page += 1;
               this.list.push(...data);
-            //   console.log("1111111111111", this.list);
               $state.loaded();
             } else {
               $state.complete();
             }
           }
-        } catch (e) {
-          console.log(e);
-        }
-      }, 500);
+        }, 500);
+      } catch (e) {
+        console.log(e);
+      }
     },
+    handleReloading() {
+      setTimeout(() => {
+        if (this.infinite_loading_num == 0) {
+          this.infiniteHandler();
+        }
+      }, 5000);
+    },
+
     resetInfinite() {
       this.page = 1;
       this.list = [];
