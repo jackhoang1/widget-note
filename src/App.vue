@@ -10,10 +10,14 @@
           class="btn btn-primary align-self-center"
           style="height: 3rem;width: 6rem"
           @click="runOAuth()"
-        >Kích hoạt</button>
+        >
+          {{ $t('note_run_oath') }}
+        </button>
       </div>
       <div v-if="is_oauth" style="height:100%">
-        <p class="text-center pt-2 m-0" style="font-size:1rem;font-weight:600">Ghi Chú</p>
+        <p class="text-center pt-2 m-0" style="font-size:1rem;font-weight:600">
+          {{ $t('note_title') }}
+        </p>
         <div class="note">
           <div>
             <!-- <header> -->
@@ -33,7 +37,9 @@
                     />
                     <img class="mx-2" src="../public/img/icons/user.png" alt v-else />
                     <span v-if="item.staff_name">{{item.staff_name}}</span>
-                    <span v-else>Nhân Viên</span>
+                    <span v-else>
+                      {{ $t('note_customer_title')}}
+                    </span>
                     <img
                       class="mx-2"
                       src="../public/img/icons/clock.png"
@@ -68,12 +74,14 @@
               </div>
               <!-- input edit note -->
               <div v-else>
-                <div class="text-right px-3" style="cursor: pointer" @click="item.edit=false">Cancel</div>
+                <div class="text-right px-3" style="cursor: pointer" @click="item.edit=false">
+                  {{  $t('note_cancel_title') }}
+                </div>
                 <div
                   id="note__content--input-edit"
                   contenteditable="plaintext-only"
                   @keyup.13="checkKeyCodeUpdate($event,item._id)"
-                  data-text="Sửa nội dung, Ấn Enter để lưu, Shift+Enter để xuống dòng ..."
+                  :data-text="$t('note_update_placeholder')"
                 >{{item.content}}</div>
               </div>
               <!-- Hacker News item loop -->
@@ -90,8 +98,13 @@
               class="py-4"
               style="font-size:1rem"
               v-if="list.length==0"
-            >Bạn chưa tạo ghi chú!</div>
-            <div slot="no-more">No more Note</div>
+            >
+              {{ $t('note_no_data') }}
+            </div>
+            <div slot="no-more">
+              {{ $t('note_infinite_end') }}
+            </div>
+            <div slot='no-results'></div>
           </infinite-loading>
         </div>
         <!-- input create note && icon schedule -->
@@ -101,9 +114,13 @@
             id="note__content--input-create"
             contenteditable="plaintext-only"
             @keyup.13="checkKeyCodeCreate"
-            data-text="Nhập nội dung, Ấn Enter để lưu ..."
+            :data-text="$t('note_new_title')"
           ></div>
-          <div class="px-2" title="Đặt Nhắc Hẹn" @click="handleShowModal">
+          <div 
+            class="px-2" 
+            title="Đặt Nhắc Hẹn" 
+            @click="handleShowModal"
+          >
             <img class="note__icon--schedule" src="../public/img/icons/schedule.png" alt />
           </div>
         </div>
@@ -113,39 +130,45 @@
     <div class="modal__note" v-if="show_modal">
       <div class="modal__content">
         <div>
-          <p class="font-weight-bold">Nhắc hẹn</p>
+          <p class="font-weight-bold">
+            {{ $t('note_lock_modal_title') }}
+          </p>
           <div
             id="content__schedule--input"
             contenteditable="plaintext-only"
-            data-text="Nhập nội dung nhắc hẹn"
+            :data-text="$t('note_lock_content_placeholder')"
           ></div>
           <div class="modal__content--btn-time">
-            <p class="mb-1">Chọn nhanh</p>
+            <p class="mb-1">
+              {{ $t('note_lock_quick_select') }}
+            </p>
             <div class="d-flex justify-content-around align-items-center">
               <button
                 class="btn btn-outline-secondary btn-sm"
                 @click="handleChooseTime('1h')"
                 :class="{choose__time:is_choose_time=='1h'}"
-              >1h nữa</button>
+              >{{ $t('note_lock_quick_option_1') }}</button>
               <button
                 class="btn btn-outline-secondary btn-sm"
                 @click="handleChooseTime('3h')"
                 :class="{choose__time:is_choose_time=='3h'}"
-              >3h nữa</button>
+              >{{ $t('note_lock_quick_option_2') }}</button>
               <button
                 class="btn btn-outline-secondary btn-sm"
                 @click="handleChooseTime('6h')"
                 :class="{choose__time:is_choose_time=='6h'}"
-              >6h nữa</button>
+              >{{ $t('note_lock_quick_option_3') }}</button>
               <button
                 class="btn btn-outline-secondary btn-sm"
                 @click="handleChooseTime('tomorrow')"
                 :class="{choose__time:is_choose_time=='tomorrow'}"
-              >9h mai</button>
+              >{{ $t('note_lock_quick_option_4') }}</button>
             </div>
           </div>
           <div class="d-flex justify-content-between align-items-center">
-            <p class="mb-0">Thời gian nhắc</p>
+            <p class="mb-0">
+              {{ $t('note_lock_specific_time')}}
+            </p>
             <input
               class="content__schedule--input-time form-control"
               type="datetime-local"
@@ -155,8 +178,12 @@
             />
           </div>
           <div class="modal__content--btn">
-            <button class="btn btn-danger btn-sm" @click="handleHideModal();clearScheduleTime()">Huỷ</button>
-            <button class="btn btn-primary btn-sm" @click="createSchedule">Tạo nhắc hẹn</button>
+            <button class="btn btn-danger btn-sm" @click="handleHideModal();clearScheduleTime()">
+              {{ $t('note_modal_cancel') }}
+            </button>
+            <button class="btn btn-primary btn-sm" @click="createSchedule">
+              {{ $t('note_modal_create') }}
+            </button>
           </div>
         </div>
       </div>
@@ -316,20 +343,20 @@ export default {
     async createSchedule() {
       try {
         if (!this.schedule_time) {
-          return this.swalToast("Chưa thiêt lập thời gian nhắc hẹn", "warning");
+          return this.swalToast(this.$t('note_js_message_1'), "warning");
         }
         this.is_create_schedule = true;
         let content_schedule = document
           .getElementById("content__schedule--input")
           .innerHTML.trim();
         if (!content_schedule) {
-          return this.swalToast("Chưa nhập nội dung cuộc hẹn", "warning");
+          return this.swalToast(this.$t('note_js_message_2'), "warning");
         }
-        this.content_schedule = `Nhắc hẹn [${this.handleTimeScheduleToString(
+        this.content_schedule = `${ this.$t('note_js_message_3')} [${this.handleTimeScheduleToString(
           this.schedule_time
         )}] : ${content_schedule}`;
 
-        this.content = `Lịch hẹn [${this.handleTimeScheduleToString(
+        this.content = `${ this.$t('note_js_message_4')} [${this.handleTimeScheduleToString(
           this.schedule_time
         )}] : ${content_schedule}`;
         let body = {
@@ -344,7 +371,7 @@ export default {
 
         let create_note = await this.createNote();
 
-        this.swalToast("Đặt nhắc hẹn thành công", "success");
+        this.swalToast(this.$t('note_js_message_5'), "success");
         this.is_create_schedule = false;
         this.clearScheduleTime();
         this.content_schedule = "";
@@ -355,7 +382,7 @@ export default {
         console.log(e);
         this.is_create_schedule = false;
         this.swalToast(
-          "Đặt nhắc hẹn thất bại, vui lòng thử lại sau",
+          this.$t('note_js_message_6'),
           "warning"
         );
       }
@@ -389,14 +416,14 @@ export default {
         ) {
           let note = create_note.data.data.note;
           this.addItemListNote(note);
-          this.swalToast("Đã thêm", "success");
+          this.swalToast(this.$t('note_js_message_7'), "success");
           this.content = "";
           this.clearScheduleTime();
           document.getElementById("note__content--input-create").innerHTML = "";
         }
       } catch (e) {
         console.log(e);
-        this.swalToast("Thêm thất bại", "warning");
+        this.swalToast(this.$t('note_js_message_8'), "warning");
       }
     },
 
@@ -405,10 +432,10 @@ export default {
       try {
         let delete_note = await fetch.post(API + "/delete", { _id: _id });
         this.deleteItemListNote(_id);
-        this.swalToast("Đã xoá", "success");
+        this.swalToast(this.$t('note_js_message_9'), "success");
       } catch (e) {
         console.log(e);
-        this.swalToast("Xoá thất bại", "warning");
+        this.swalToast(this.$t('note_js_message_10'), "warning");
       }
     },
     async updateNote(_id, content) {
@@ -425,10 +452,10 @@ export default {
         let update_note = await fetch.post(API + "/update", body);
 
         this.editItemListNote(_id, content);
-        this.swalToast("Đã sửa", "success");
+        this.swalToast(this.$t('note_js_message_11'), "success");
       } catch (e) {
         console.log(e);
-        this.swalToast("Sửa thất bại", "warning");
+        this.swalToast(this.$t('note_js_message_12'), "warning");
       }
     },
     handleChooseTime(time) {
@@ -511,17 +538,17 @@ export default {
         yesterday_month == month &&
         yesterday_year == year
       )
-        return `${hours}:${minutes} Hôm qua`;
+        return `${hours}:${minutes} ${ this.$t('note_js_message_14') }`;
       if (now_date == date && now_month == month && now_year == year) {
-        return `${hours}:${minutes} Hôm nay`;
+        return `${hours}:${minutes} ${ this.$t('note_js_message_15') }`;
       }
       if (
         tomorrow_date == date &&
         tomorrow_month == month &&
         tomorrow_year == year
       )
-        return `${hours}:${minutes} Ngày mai`;
-      return `${hours}:${minutes} ${date} Tháng ${month + 1}`;
+        return `${hours}:${minutes} ${ this.$t('note_js_message_16') }`;
+      return `${hours}:${minutes} ${date} ${ this.$t('note_js_message_17') } ${month + 1}`;
     },
 
     infiniteHandler($state) {
@@ -816,7 +843,6 @@ body {
       button {
         // margin: 0 3px 0 3px;
         // padding: 0 2px 0 2px;
-        width: 58px;
         height: 25px;
         font-size: 0.75rem;
         border: none;
