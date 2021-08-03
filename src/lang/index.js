@@ -146,6 +146,8 @@ export default new VueI18n({
         vi,
         en,
         th,
+        vn: vi,
+        us: en,
     },
     fallbackLocale: 'en'
 })
