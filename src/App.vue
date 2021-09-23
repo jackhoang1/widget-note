@@ -116,6 +116,7 @@
             @keyup.13="checkKeyCodeCreate"
             :data-text="$t('note_new_title')"
           ></div>
+          <img @click="checkKeyCodeCreate" class="note__icon--schedule" src="../public/img/icons/send.png" alt />
           <div 
             class="px-2" 
             title="Đặt Nhắc Hẹn" 
@@ -367,7 +368,7 @@ export default {
           telegram_id: "",
         };
 
-        let create_schedule = await fetch.post(APISCHEDULE, body);
+        let create_schedule = await fetch.post(APISCHEDULE, body, this.access_token);
 
         let create_note = await this.createNote();
 
@@ -406,7 +407,7 @@ export default {
         };
         if (!this.schedule_time) delete body.schedule;
 
-        let create_note = await fetch.post(API + "/create", body);
+        let create_note = await fetch.post(API + "/create", body, this.access_token);
 
         if (
           create_note &&
@@ -430,7 +431,7 @@ export default {
     async deleteNote(_id) {
       ////delete note
       try {
-        let delete_note = await fetch.post(API + "/delete", { _id: _id });
+        let delete_note = await fetch.post(API + "/delete", { _id: _id }, this.access_token);
         this.deleteItemListNote(_id);
         this.swalToast(this.$t('note_js_message_9'), "success");
       } catch (e) {
@@ -449,7 +450,7 @@ export default {
           // schedule: this.schedule_time,
         };
 
-        let update_note = await fetch.post(API + "/update", body);
+        let update_note = await fetch.post(API + "/update", body, this.access_token);
 
         this.editItemListNote(_id, content);
         this.swalToast(this.$t('note_js_message_11'), "success");
@@ -562,7 +563,7 @@ export default {
             skip: (this.page - 1) * 5,
             limit: 5,
           };
-          let read_note = await fetch.post(API + "/read", body);
+          let read_note = await fetch.post(API + "/read", body, this.access_token);
           if (
             read_note &&
             read_note.data &&
@@ -627,7 +628,8 @@ export default {
 
         let oauth = await fetch.post(
           `${APIBase}/v1/app/app-installed/update`,
-          body
+          body,
+          this.access_token
         );
 
         this.is_oauth = true;
@@ -646,7 +648,8 @@ export default {
 
         let get_customer_info = await fetch.post(
           `${APIBase}/v1/service/partner-authenticate`,
-          body
+          body,
+          this.access_token
         );
 
         if (
@@ -714,7 +717,7 @@ body {
     height: 100%;
     .note {
       // position: absolute;
-      height: 65%;
+      height: calc(100vh - 97px);
       overflow-y: scroll;
       font-size: 12px;
       .note__body {
@@ -790,6 +793,7 @@ body {
 }
 #note__content--input-create {
   max-height: 60px;
+  width: calc(100vw - 97px) !important;
   border-color: $colorBgNote;
   background-color: $colorBgNote;
   box-shadow: $boxShadowInput;
